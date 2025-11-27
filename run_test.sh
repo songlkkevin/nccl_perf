@@ -74,6 +74,7 @@ run_and_log() {
 
 # Runs: symmetric (R=2) with 2 and 4 procs, then local (R=1) with 2 and 4 procs
 # for each executable (alltoall_perf and all_reduce_perf by default)
+export NCCL_DEBUG=VERSION
 for exe in "${EXECUTABLES[@]}"; do
 	echo "=== Running tests for $exe ==="
 	run_and_log "$exe" 2 2 symm
