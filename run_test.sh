@@ -37,12 +37,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 BUILD_DIR="./build"
-DATA_DIR="data"
 
 # Split executables by comma if multiple are provided
 IFS=',' read -ra EXECUTABLES <<< "$EXE_NAME"
 
-mkdir -p "$DATA_DIR"
+touch output.log
 
 # Check all executables exist
 for exe in "${EXECUTABLES[@]}"; do
@@ -62,13 +61,13 @@ run_and_log() {
 	local suffix="$1"; shift
 
 	local EXE_PATH="$BUILD_DIR/$exe"
-	local logname="$DATA_DIR/${LOG_BASE}-v100x${np}.${suffix}.${exe}.log"
+	local output_log="output.log"
 
-	echo "Running: mpirun -np ${np} ${EXE_PATH} -R ${R} -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1"
+	echo "Running: mpirun -np ${np} ${EXE_PATH} -R ${R} -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1" | tee -a "$output_log"
 	if [[ -n "$LD_PRELOAD_PATH" ]]; then
-		mpirun --bind-to core --map-by core --report-bindings -np "$np" -x LD_LIBRARY_PATH=${LD_PRELOAD_PATH}:${LD_LIBRARY_PATH:-} "$EXE_PATH" -R "$R" -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1 | tee "$logname"
+		mpirun --bind-to core --map-by core --report-bindings -np "$np" -x LD_LIBRARY_PATH=${LD_PRELOAD_PATH}:${LD_LIBRARY_PATH:-} "$EXE_PATH" -R "$R" -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1 2>&1 | tee -a "$output_log"
 	else
-		mpirun --bind-to core --map-by core --report-bindings -np "$np" -x LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-} "$EXE_PATH" -R "$R" -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1 | tee "$logname"
+		mpirun --bind-to core --map-by core --report-bindings -np "$np" -x LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-} "$EXE_PATH" -R "$R" -b 8 -e 4G -G 100 -f 2 -n 100 -w 25 -g 1 2>&1 | tee -a "$output_log"
 	fi
 }
 
@@ -83,4 +82,4 @@ for exe in "${EXECUTABLES[@]}"; do
 	run_and_log "$exe" 4 1 local
 done
 
-echo "Logs written to: $DATA_DIR/"
+echo "All output written to: output.log"
